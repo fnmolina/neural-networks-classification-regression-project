@@ -65,7 +65,7 @@ def callback_TensorBoard():
                             update_freq='epoch'
                             )
 
-def callback_EarlyStopping(patience = 10, monitor = "val_accuracy", min_delta = 0.001, start_epoch = 30):
+def callback_EarlyStopping(patience = 10, monitor = "val_accuracy", min_delta = 0.001, start_epoch = 75):
     callback = EarlyStopping(
     monitor=monitor,
     min_delta=min_delta,
@@ -105,11 +105,11 @@ def classification_model(   x_data_shape = [48000,28,28],
                             hidden_layers_units = [0],
                             hidden_activation = 'sigmoid',
                             kernel_initializer= 'random_normal',
-                            dropout_rate = 0.0,
+                            dropout_rate = [0.0],
                             regularizer = None,
                             regularizer_rate = 0.001,
                             bias_initializer = 'zeros',
-                            use_batch_normalization=False,
+                            use_batch_normalization=[],
                             lr = 0.001,
                             decay = 0,
                             out_softmax = False
@@ -142,9 +142,9 @@ def classification_model(   x_data_shape = [48000,28,28],
 
     for i in range(hidden_layers_size):
         model.add(Dense(hidden_layers_units[i], activation = hidden_activation, kernel_initializer = kernel_initializer))
-        if dropout_rate != 0.0:
-            model.add(Dropout(dropout_rate))
-        if use_batch_normalization:
+        if dropout_rate[i] != 0.0:
+            model.add(Dropout(dropout_rate[i]))
+        if use_batch_normalization[i]:
             model.add(BatchNormalization())
 
     if out_softmax:
