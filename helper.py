@@ -65,7 +65,7 @@ def callback_TensorBoard():
                             update_freq='epoch'
                             )
 
-def callback_EarlyStopping(patience = 10, monitor = "val_accuracy", min_delta = 0.001, start_epoch = 75):
+def callback_EarlyStopping(patience = 10, monitor = "val_accuracy", min_delta = 0.001, start_epoch = 20):
     callback = EarlyStopping(
     monitor=monitor,
     min_delta=min_delta,
@@ -83,21 +83,25 @@ def recall_m(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     recall = true_positives / (possible_positives + K.epsilon())
+    #recall = recall_score(y_true, y_pred, average='macro')
     return recall
 
 def precision_m(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
     precision = true_positives / (predicted_positives + K.epsilon())
+    #precision = precision_score(y_true, y_pred, average='macro')
     return precision
 
 def f1_m(y_true, y_pred):
     precision = precision_m(y_true, y_pred)
     recall = recall_m(y_true, y_pred)
     return 2*((precision*recall)/(precision+recall+K.epsilon()))
+    #f1_m = f1_score(y_true, y_pred, average='macro')
+    return f1_m
 
-def auc_m(y_true, y_pred):
-    return roc_auc_score(y_true, y_pred, average="macro")
+def roc_auc_m(y_true, y_pred):
+    return roc_auc_score(y_true, y_pred, multi_class='ovr', average="macro")
 
 def classification_model(   x_data_shape = [48000,28,28],
                             output_size = 10,
@@ -158,5 +162,42 @@ def classification_model(   x_data_shape = [48000,28,28],
     return model
 
 
+# def plot_metrics 
+
+# roc_auc_softmax = roc_auc_score(y_sparse_test, y_pred_softmax, multi_class='ovr', average='macro')
+# f1_macro_softmax = f1_score(y_sparse_test.argmax(axis=1), y_pred_softmax.argmax(axis=1), average='macro')
+# f1_micro_softmax = f1_score(y_sparse_test.argmax(axis=1), y_pred_softmax.argmax(axis=1), average='micro')
+# precision_softmax = precision_score(y_sparse_test.argmax(axis=1), y_pred_softmax.argmax(axis=1), average='macro')
+# recall_softmax = recall_score(y_sparse_test.argmax(axis=1), y_pred_softmax.argmax(axis=1), average='macro')
 
     
+# ROC 
+def plot_ROC(y_test, y_pred, class_names):
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    for i in range(len(class_names)):
+        fpr[i], tpr[i], _ = roc_curve(y_test[:,i], y_pred[:,i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_pred.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+    # Compute macro-average ROC curve and ROC area
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(10)]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(len(class_names)):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= len(class_names)
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+    return fpr, tpr, roc_auc
