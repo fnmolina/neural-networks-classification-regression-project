@@ -1,1 +1,1 @@
-# neural-networks-classification-regression-project
+# neural-networks-projects
